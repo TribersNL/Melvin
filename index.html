@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BizaBody">
+<meta name="theme-color" content="#2F6FED">
+<title>BizaBody — Operation Ibiza</title>
+<style>
+  :root{
+    --bg-grad-a:#EEF3FB; --bg-grad-b:#E4EBF6;
+    --card:#FFFFFF; --card-2:#F7FAFD;
+    --text:#1C2733; --text-2:#5B6B7B; --text-3:#93A2B1;
+    --blue:#2F6FED; --blue-2:#5B8DF5; --blue-soft:#EAF1FE;
+    --green:#2FB56B; --green-soft:#E8F7EF;
+    --orange:#F2803B; --orange-soft:#FDEFE4;
+    --line:#E7EDF4;
+    --shadow:0 10px 30px rgba(28,39,51,.08),0 2px 8px rgba(28,39,51,.05);
+  }
+  [data-theme="dark"]{
+    --bg-grad-a:#101827; --bg-grad-b:#0B111B;
+    --card:#182130; --card-2:#1F2A3C;
+    --text:#F0F4F9; --text-2:#A7B4C4; --text-3:#6B7A8C;
+    --blue:#5B8DF5; --blue-2:#7FA6F8; --blue-soft:#1D2C48;
+    --green:#3FCB80; --green-soft:#153426;
+    --orange:#F5924F; --orange-soft:#3A2717;
+    --line:#243146;
+    --shadow:0 10px 30px rgba(0,0,0,.45),0 2px 8px rgba(0,0,0,.3);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{height:100%}
+  body{
+    min-height:100%;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:linear-gradient(180deg,var(--bg-grad-a),var(--bg-grad-b)) fixed;
+    color:var(--text);-webkit-font-smoothing:antialiased;transition:background .4s;
+  }
+  #app{
+    max-width:430px;margin:0 auto;position:relative;
+    display:flex;flex-direction:column;
+    height:100vh;height:100dvh;min-height:620px;
+  }
+
+  /* ── Dashboard / countdown ─────────────────── */
+  header{padding:calc(env(safe-area-inset-top,0px) + 12px) 18px 8px;display:flex;flex-direction:column;gap:10px;flex:none}
+  .brandrow{display:flex;align-items:center;justify-content:space-between}
+  .brand{display:flex;align-items:baseline;gap:8px}
+  .brand h1{font-size:17px;font-weight:800;letter-spacing:-.3px}
+  .brand span{font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1.4px}
+  .iconbtn{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--card);
+    color:var(--text-2);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow)}
+  .countdown{
+    background:linear-gradient(135deg,var(--blue) 0%,var(--blue-2) 60%,#7FB0FF 100%);
+    border-radius:20px;padding:13px 18px;color:#fff;box-shadow:0 12px 26px rgba(47,111,237,.32);
+    display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;
+  }
+  .countdown::after{content:"";position:absolute;right:-30px;top:-40px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.14)}
+  .countdown .label{font-size:10.5px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;opacity:.85}
+  .countdown .big{font-size:31px;font-weight:800;letter-spacing:-1px;line-height:1.05}
+  .countdown .big small{font-size:14px;font-weight:700;letter-spacing:0}
+  .countdown .dest{text-align:right;font-size:12.5px;font-weight:700;opacity:.95;z-index:1}
+  .countdown .dest .ib{font-size:17px;font-weight:800;letter-spacing:2px}
+  .progressbar{height:5px;border-radius:3px;background:rgba(255,255,255,.28);margin-top:9px;overflow:hidden;position:relative;z-index:1;min-width:150px}
+  .progressbar i{display:block;height:100%;background:#fff;border-radius:3px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+  .dots{display:flex;gap:4px;justify-content:center;flex:none;padding:2px 0 0}
+  .dots i{width:5px;height:5px;border-radius:50%;background:var(--text-3);opacity:.35}
+  .dots i.on{background:var(--blue);opacity:1}
+  .dots i.done{background:var(--green);opacity:.8}
+
+  /* ── Card stack ────────────────────────────── */
+  #stage{flex:1;position:relative;margin:6px 16px 8px;min-height:420px}
+  .daycard{
+    position:absolute;inset:0;
+    background:var(--card);border-radius:24px;box-shadow:var(--shadow);border:1px solid var(--line);
+    overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+    touch-action:pan-y;
+    transition:transform .45s cubic-bezier(.2,.8,.25,1),opacity .45s;
+  }
+  .daycard.dragging{transition:none}
+  .daycard.behind{transform:scale(.94) translateY(14px);opacity:.5;pointer-events:none;filter:saturate(.8)}
+  .daycard.gone-left{transform:translateX(-130%) rotate(-8deg);opacity:0}
+  .daycard.gone-right{transform:translateX(130%) rotate(8deg);opacity:0}
+  .cardinner{padding:24px 20px 26px}
+
+  .hero{text-align:center;margin-bottom:18px}
+  .hero .dag{font-size:12px;font-weight:800;letter-spacing:3px;color:var(--blue);text-transform:uppercase}
+  .hero .dag.past{color:var(--green)}
+  .hero .dagnum{font-size:48px;font-weight:800;letter-spacing:-2px;line-height:1.05;margin:2px 0}
+  .hero .sub{font-size:14px;color:var(--text-2);font-weight:500}
+  .hero .wk{font-size:11.5px;color:var(--text-3);font-weight:700;margin-top:3px;letter-spacing:.4px}
+  .wtitle{margin-top:14px;display:inline-flex;align-items:center;gap:8px;background:var(--orange-soft);color:var(--orange);
+    padding:9px 16px;border-radius:999px;font-weight:700;font-size:15px}
+  .wtitle.rest{background:var(--green-soft);color:var(--green)}
+  .focus{margin-top:10px;font-size:13px;color:var(--text-2);line-height:1.5;font-weight:500;padding:0 6px}
+
+  .section{margin-top:20px}
+  .sechead{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+  .sechead h3{font-size:12.5px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-3)}
+  .sechead .count{font-size:12px;font-weight:700;color:var(--text-3)}
+  .sechead .count.full{color:var(--green)}
+  .panel{background:var(--card-2);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+
+  .row{display:flex;align-items:center;gap:12px;padding:12px 13px;border-bottom:1px solid var(--line);cursor:pointer}
+  .row:last-child{border-bottom:none}
+  .cb{width:25px;height:25px;border-radius:9px;border:2px solid var(--text-3);flex:none;display:flex;align-items:center;
+    justify-content:center;color:transparent;font-size:13px;font-weight:800;transition:all .18s cubic-bezier(.2,.8,.2,1)}
+  .row.done .cb,.rule.done .cb{color:#fff}
+  .row.done .cb{background:var(--green);border-color:var(--green);transform:scale(1.06)}
+  .row .info{flex:1;min-width:0}
+  .row .name{font-size:14.5px;font-weight:600}
+  .row .meta{font-size:12.5px;color:var(--text-2);margin-top:2px}
+  .row.done .name{color:var(--text-3);text-decoration:line-through}
+  .row.done .meta{color:var(--text-3)}
+  .wchip{flex:none;font-size:13px;font-weight:700;color:var(--blue);background:var(--blue-soft);border:none;
+    border-radius:10px;padding:7px 10px;cursor:pointer;font-family:inherit}
+  .stepper{flex:none;display:flex;align-items:center;gap:5px}
+  .stepper button{width:29px;height:29px;border-radius:9px;border:1px solid var(--line);background:var(--card);
+    color:var(--blue);font-size:16px;font-weight:800;cursor:pointer;line-height:1}
+  .stepper .val{font-size:12.5px;font-weight:800;min-width:46px;text-align:center}
+
+  .meal{padding:13px 14px}
+  .meal+.meal{border-top:1px solid var(--line)}
+  .mealtop{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+  .mealname{font-size:14.5px;font-weight:700}
+  .mealitems{font-size:13px;color:var(--text-2);line-height:1.55}
+  .klaar{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--text-2);
+    border:1.5px solid var(--line);border-radius:999px;padding:6px 13px;cursor:pointer;background:var(--card);transition:all .2s}
+  .klaar.done{background:var(--green);border-color:var(--green);color:#fff}
+
+  .rules{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .rule{display:flex;align-items:center;gap:8px;background:var(--card-2);border:1px solid var(--line);
+    border-radius:14px;padding:11px 11px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .2s}
+  .rule .cb{width:20px;height:20px;border-radius:7px;font-size:11px}
+  .rule.done{background:var(--green-soft);border-color:transparent;color:var(--green)}
+  .rule.done .cb{background:var(--green);border-color:var(--green)}
+
+  .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .ptile{background:var(--card-2);border:1px solid var(--line);border-radius:16px;padding:12px 13px}
+  .ptile label{font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);display:block;margin-bottom:5px}
+  .ptile input[type=number]{width:75%;border:none;background:transparent;font-size:19px;font-weight:800;color:var(--text);font-family:inherit;outline:none}
+  .ptile .unit{font-size:12px;color:var(--text-3);font-weight:700}
+  .stars{display:flex;gap:4px;font-size:21px;cursor:pointer;user-select:none}
+  .stars span{opacity:.22;transition:all .15s}
+  .stars span.on{opacity:1}
+  .fototile{grid-column:1/-1;display:flex;align-items:center;gap:12px;cursor:pointer}
+  .fototile .ph{width:50px;height:50px;border-radius:14px;background:var(--blue-soft);color:var(--blue);
+    display:flex;align-items:center;justify-content:center;font-size:21px;flex:none;overflow:hidden}
+  .fototile .ph img{width:100%;height:100%;object-fit:cover}
+  .fototile input{display:none}
+  .fototile .txt{font-size:13px;font-weight:600;color:var(--text-2);line-height:1.4}
+
+  .donemsg{margin-top:22px;text-align:center;background:var(--green-soft);border-radius:18px;padding:20px 16px;animation:pop .5s cubic-bezier(.2,.8,.2,1)}
+  .donemsg .big{font-size:20px;font-weight:800;color:var(--green)}
+  .donemsg .small{font-size:14px;color:var(--text-2);margin-top:5px;font-weight:500}
+  @keyframes pop{0%{transform:scale(.9);opacity:0}100%{transform:scale(1);opacity:1}}
+  .swipehint{margin-top:14px;text-align:center;font-size:13px;font-weight:700;color:var(--blue);animation:nudge 1.6s ease-in-out infinite}
+  @keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(-8px)}}
+
+  .actions{display:flex;gap:9px;margin-top:20px}
+  .btn{flex:1;padding:15px 10px;border:none;border-radius:16px;cursor:pointer;font-size:15px;font-weight:800;font-family:inherit;transition:transform .15s}
+  .btn:active{transform:scale(.96)}
+  .btn.primary{background:linear-gradient(135deg,var(--blue),var(--blue-2));color:#fff;box-shadow:0 8px 20px rgba(47,111,237,.32)}
+  .btn.ghost{background:var(--card-2);color:var(--text-2);border:1px solid var(--line);flex:0 0 auto;padding:15px 16px}
+  .btn.soft{background:var(--card-2);color:var(--text-3);border:1px solid var(--line)}
+
+  footer{flex:none;text-align:center;font-size:11.5px;font-weight:600;color:var(--text-3);
+    padding:0 16px calc(env(safe-area-inset-bottom,0px) + 10px)}
+
+  /* week review + finale */
+  .review .dagnum{font-size:30px !important;letter-spacing:-1px !important}
+  .statlist .stat{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--line)}
+  .statlist .stat:last-child{border-bottom:none}
+  .stat .k{font-size:14px;font-weight:600;color:var(--text-2)}
+  .stat .v{font-size:16px;font-weight:800}
+  .stat .v.green{color:var(--green)}
+  .quote{margin-top:16px;background:var(--blue-soft);border-radius:16px;padding:15px 17px;font-size:14px;line-height:1.55;color:var(--blue);font-weight:600;text-align:center}
+  .beforeafter{display:flex;gap:8px;margin-top:13px}
+  .beforeafter .bx{flex:1;aspect-ratio:3/4;border-radius:14px;background:var(--card-2);border:1px dashed var(--line);
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;color:var(--text-3);font-size:12px;font-weight:700;overflow:hidden}
+  .beforeafter img{width:100%;height:100%;object-fit:cover}
+  .finale{background:linear-gradient(160deg,var(--blue) 0%,#4A80F0 45%,#79B8FF 100%);color:#fff}
+  .finale .hero .dag,.finale .hero .sub,.finale .hero .wk{color:rgba(255,255,255,.85)}
+  .finale .statlist{background:rgba(255,255,255,.14);border:none}
+  .finale .stat{border-color:rgba(255,255,255,.18)}
+  .finale .stat .k{color:rgba(255,255,255,.8)}
+  .finale .stat .v{color:#fff}
+
+  /* profielkeuze */
+  .profiles{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+  .profile{display:flex;align-items:center;gap:14px;background:var(--card-2);border:1px solid var(--line);
+    border-radius:18px;padding:15px 16px;cursor:pointer;transition:transform .15s}
+  .profile:active{transform:scale(.97)}
+  .avatar{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:18px;color:#fff;flex:none}
+  .profile .pname{font-size:16px;font-weight:800}
+  .profile .pmeta{font-size:12.5px;color:var(--text-2);margin-top:2px;font-weight:600}
+  .profile .arrow{margin-left:auto;color:var(--text-3);font-weight:800;font-size:18px}
+  #profilebtn{width:auto;padding:0 13px;border-radius:999px;font-size:12.5px;font-weight:800;display:none}
+
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:99}
+  .toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:86px;z-index:50;background:var(--text);
+    color:var(--card);padding:10px 18px;border-radius:999px;font-size:13px;font-weight:700;opacity:0;
+    transition:all .35s cubic-bezier(.2,.8,.2,1);pointer-events:none;white-space:nowrap;box-shadow:var(--shadow)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #errbar{display:none;background:#B3261E;color:#fff;font-size:12px;font-weight:600;padding:8px 14px;border-radius:12px;margin:0 18px 6px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brandrow">
+      <div class="brand"><h1>BizaBody</h1><span>Operation Ibiza</span></div>
+      <div style="display:flex;gap:8px">
+        <button class="iconbtn" id="profilebtn" aria-label="Profiel wisselen"></button>
+        <button class="iconbtn" id="themebtn" aria-label="Donkere modus">◐</button>
+      </div>
+    </div>
+    <div class="countdown">
+      <div>
+        <div class="label">Nog</div>
+        <div class="big" id="cd-days">42 <small>dagen</small></div>
+        <div class="progressbar"><i id="cd-bar" style="width:2%"></i></div>
+      </div>
+      <div class="dest">tot<br><span class="ib">IBIZA 🏝️</span></div>
+    </div>
+    <div class="dots" id="dots"></div>
+  </header>
+  <div id="errbar"></div>
+
+  <div id="stage">
+    <!-- Statische fallback: dag 1 (wordt door de app vervangen) -->
+    <div class="daycard"><div class="cardinner">
+      <div class="hero">
+        <div class="dag">Vandaag</div>
+        <div class="dagnum">DAG 1</div>
+        <div class="sub">Nog 42 dagen tot Ibiza</div>
+        <div class="wk">WEEK 1 · TRAININGSDAG 1</div>
+        <div><span class="wtitle">🔥 Upper Chest &amp; Round Delts</span></div>
+      </div>
+      <div class="section"><div class="sechead"><h3>Workout</h3></div>
+        <div class="panel">
+          <div class="row"><div class="cb">✓</div><div class="info"><div class="name">Incline Dumbbell Press</div><div class="meta">4 × 8-12 · 16 kg</div></div></div>
+          <div class="row"><div class="cb">✓</div><div class="info"><div class="name">Low to High Cable Fly</div><div class="meta">4 × 15 · 10 kg</div></div></div>
+          <div class="row"><div class="cb">✓</div><div class="info"><div class="name">Chest Press</div><div class="meta">3 × 10 · 45 kg</div></div></div>
+          <div class="row"><div class="cb">✓</div><div class="info"><div class="name">Shoulder Press</div><div class="meta">3 × 10 · 8 kg</div></div></div>
+          <div class="row"><div class="cb">✓</div><div class="info"><div class="name">Lateral Raise</div><div class="meta">4 × 15 · 4 kg</div></div></div>
+          <div class="row"><div class="cb">✓</div><div class="info"><div class="name">Rear Delt Fly</div><div class="meta">3 × 15</div></div></div>
+          <div class="row"><div class="cb">✓</div><div class="info"><div class="name">Cable Crunch</div><div class="meta">4 × 15</div></div></div>
+          <div class="row"><div class="cb">✓</div><div class="info"><div class="name">Incline Walk</div><div class="meta">20 minuten · 12% · 5,5 km/u</div></div></div>
+        </div>
+      </div>
+      <div class="section"><div class="sechead"><h3>Voeding</h3></div>
+        <div class="panel">
+          <div class="meal"><div class="mealtop"><span class="mealname">🍳 Ontbijt</span></div><div class="mealitems">300 g magere kwark · 30 g whey · blauwe bessen</div></div>
+          <div class="meal"><div class="mealtop"><span class="mealname">🥗 Lunch</span></div><div class="mealitems">250 g kip · 100 g rijst · 200 g groenten</div></div>
+          <div class="meal"><div class="mealtop"><span class="mealname">🍎 Snack</span></div><div class="mealitems">Skyr · appel</div></div>
+          <div class="meal"><div class="mealtop"><span class="mealname">🍽️ Diner</span></div><div class="mealitems">250 g kip · 400 g groenten · 150 g aardappelen</div></div>
+          <div class="meal"><div class="mealtop"><span class="mealname">🌙 Avond</span></div><div class="mealitems">250 g Skyr</div></div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <footer id="hint">← swipe links = dag afronden · swipe rechts = vorige dag →</footer>
+</div>
+
+<canvas id="confetti"></canvas>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+window.onerror = function(msg){
+  var b = document.getElementById("errbar");
+  if(b){ b.style.display="block"; b.textContent = "Er ging iets mis: " + msg; }
+};
+
+/* ═══════════════════ PROTOCOL DATA — 43 dagen ═══════════════════ */
+const TOTAL = 43; // dag 43 = vertrek naar Ibiza
+
+const CARDIO = {name:"Incline Walk", meta:"20 minuten · 12% · 5,5 km/u"};
+
+const DEFAULT_WEIGHTS = {
+  "Incline Dumbbell Press":16,"Low to High Cable Fly":10,"Chest Press":45,"Shoulder Press":8,
+  "Lateral Raise":4,"Barbell Row":50,"Lat Pulldown":55,"Seated Cable Row":50,"Face Pull":15,
+  "Bicep Curl":12,"Hammer Curl":10,"Squat":70,"Romanian Deadlift":60,"Leg Press":120,
+  "Leg Curl":35,"Leg Extension":40,"Calf Raise":40,"Triceps Pushdown":25,"Skull Crusher":20,
+  "Arnold Press":10,"Cable Crunch":25,"Upright Row":25,"Dumbbell Fly":10,"Pull Up (assisted)":0
+};
+
+/* 7-daags rotatieschema: 6 trainingen + 1 rustdag */
+const WORKOUTS = [
+  {title:"🔥 Upper Chest & Round Delts",
+   focus:"Focus vandaag: bovenborst vol raken en schouders rond afwerken. Eerste twee oefeningen strak in de techniek, rustig excentrisch.",
+   ex:[
+    {name:"Incline Dumbbell Press",sets:"4 × 8-12",w:1},
+    {name:"Low to High Cable Fly",sets:"4 × 15",w:1},
+    {name:"Chest Press",sets:"3 × 10",w:1},
+    {name:"Shoulder Press",sets:"3 × 10",w:1},
+    {name:"Lateral Raise",sets:"4 × 15",w:1},
+    {name:"Rear Delt Fly",sets:"3 × 15"},
+    {name:"Cable Crunch",sets:"4 × 15",w:1},
+    CARDIO ]},
+  {title:"🏋️ Back & V-Taper",
+   focus:"Focus vandaag: brede rug voor de V-taper. Trek met je ellebogen, niet met je handen. Squeeze 1 seconde onderaan elke rep.",
+   ex:[
+    {name:"Lat Pulldown",sets:"4 × 10-12",w:1},
+    {name:"Barbell Row",sets:"4 × 8-10",w:1},
+    {name:"Seated Cable Row",sets:"3 × 12",w:1},
+    {name:"Face Pull",sets:"3 × 15",w:1},
+    {name:"Bicep Curl",sets:"3 × 12",w:1},
+    {name:"Hammer Curl",sets:"3 × 12",w:1},
+    {name:"Hanging Leg Raise",sets:"4 × 12"},
+    CARDIO ]},
+  {title:"🦵 Legs & Core",
+   focus:"Focus vandaag: benen en core. Diep in de squat, controle in de RDL. Zware benen verbranden de meeste calorieën.",
+   ex:[
+    {name:"Squat",sets:"4 × 8-10",w:1},
+    {name:"Romanian Deadlift",sets:"3 × 10",w:1},
+    {name:"Leg Press",sets:"3 × 12",w:1},
+    {name:"Leg Curl",sets:"3 × 12",w:1},
+    {name:"Calf Raise",sets:"4 × 15",w:1},
+    {name:"Plank",sets:"3 × 60 sec"},
+    CARDIO ]},
+  {title:"💪 Shoulders & Arms",
+   focus:"Focus vandaag: ronde delts en strakke armen. Laterale raises licht en perfect — geen zwaaien, alleen schouder.",
+   ex:[
+    {name:"Arnold Press",sets:"4 × 10",w:1},
+    {name:"Lateral Raise",sets:"4 × 15",w:1},
+    {name:"Upright Row",sets:"3 × 12",w:1},
+    {name:"Triceps Pushdown",sets:"3 × 12",w:1},
+    {name:"Skull Crusher",sets:"3 × 10",w:1},
+    {name:"Bicep Curl",sets:"3 × 12",w:1},
+    {name:"Cable Crunch",sets:"4 × 15",w:1},
+    CARDIO ]},
+  {title:"🔥 Chest & Triceps",
+   focus:"Focus vandaag: tweede borstprikkel van de week. Iets lichter dan maandag, meer volume en spanning per rep.",
+   ex:[
+    {name:"Incline Dumbbell Press",sets:"4 × 8-12",w:1},
+    {name:"Dumbbell Fly",sets:"3 × 12",w:1},
+    {name:"Chest Press",sets:"3 × 10",w:1},
+    {name:"Low to High Cable Fly",sets:"3 × 15",w:1},
+    {name:"Triceps Pushdown",sets:"4 × 12",w:1},
+    {name:"Hanging Leg Raise",sets:"3 × 12"},
+    CARDIO ]},
+  {title:"🏔️ Full Body & Conditioning",
+   focus:"Focus vandaag: alles kort aantikken en conditie. Hoger tempo, korter rusten (60 sec), hartslag hoog houden.",
+   ex:[
+    {name:"Squat",sets:"3 × 10",w:1},
+    {name:"Pull Up (assisted)",sets:"3 × 8",w:1},
+    {name:"Shoulder Press",sets:"3 × 10",w:1},
+    {name:"Seated Cable Row",sets:"3 × 12",w:1},
+    {name:"Cable Crunch",sets:"4 × 15",w:1},
+    {name:"Incline Walk",meta:"30 minuten · 12% · 5,5 km/u"} ]},
+  {title:"🌿 Rust & Herstel", rest:true,
+   focus:"Focus vandaag: herstel. Spieren groeien op rustdagen. Wandel rustig, eet volgens plan en slaap 7,5 uur.",
+   ex:[
+    {name:"Wandeling buiten of Incline Walk",meta:"45 minuten rustig tempo"},
+    {name:"Stretchen / mobiliteit",meta:"15 minuten heupen, borst en schouders"} ]},
+];
+
+const MEALS = [
+  {icon:"🍳",name:"Ontbijt",items:["300 g magere kwark","30 g whey","blauwe bessen"]},
+  {icon:"🥗",name:"Lunch",items:["250 g kip","100 g rijst","200 g groenten"]},
+  {icon:"🍎",name:"Snack",items:["Skyr","appel"]},
+  {icon:"🍽️",name:"Diner",items:["250 g kip","400 g groenten","150 g aardappelen"]},
+  {icon:"🌙",name:"Avond",items:["250 g Skyr"]},
+];
+
+const RULES = ["180 g eiwit","10.000 stappen","Creatine","Omega 3","Vitamine D","7,5 uur slaap","Alcoholvrij"];
+
+const QUOTES = [
+  "Je bovenborst begint voller te worden. Blijf consequent.",
+  "Je schouders worden ronder en je taille strakker. Het protocol werkt — niet stoppen nu.",
+  "Halverwege. Verhoog deze week je gewichten met 2,5% waar het kan.",
+  "De definitie komt door. Iedere maaltijd telt nu dubbel.",
+  "Nog twee weken. Dit is waar kampioenen doorbijten.",
+  "Laatste week. Je bent er bijna — finish sterk.",
+];
+
+/* ═══════════════════ PROFIELEN ═══════════════════ */
+const PROFILES = [
+  {name:"Melvin", color:"#2F6FED"},
+  {name:"Benny",  color:"#F2803B"},
+  {name:"Raoul",  color:"#2FB56B"},
+];
+let profile = null;
+
+/* ═══════════════════ OPSLAG (veilig, met fallback) ═══════════════════ */
+const store = {
+  ok:false, KEY:"bizabody-v1",
+  init(){ try{ localStorage.setItem("__bb","1"); localStorage.removeItem("__bb"); this.ok=true; }catch(e){ this.ok=false; } },
+  raw(k){ if(!this.ok) return null; try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  load(){ if(!this.ok) return null; try{ return JSON.parse(localStorage.getItem(this.KEY)); }catch(e){ return null; } },
+  save(data){ if(!this.ok) return; try{ localStorage.setItem(this.KEY, JSON.stringify(data)); }catch(e){ /* quota */ } }
+};
+store.init();
+
+/* ═══════════════════ STATE ═══════════════════ */
+function freshState(){
+  return {
+    current:1, viewing:1, reviewFor:null,
+    weights: Object.assign({}, DEFAULT_WEIGHTS),
+    days:{},
+    theme:(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) ? "dark":"light",
+  };
+}
+let state = freshState();
+let saveTimer=null;
+function persist(){ clearTimeout(saveTimer); saveTimer=setTimeout(()=>store.save(state),250); }
+
+function dayState(n){
+  if(!state.days[n]){
+    const w = WORKOUTS[(n-1)%7];
+    state.days[n] = {ex:w.ex.map(()=>false), meals:MEALS.map(()=>false),
+      rules:RULES.map(()=>false), weight:"", waist:"", energy:0, photo:null, completed:false};
+  }
+  // herstel arrays als schema wijzigde
+  const d = state.days[n], w = WORKOUTS[(n-1)%7];
+  if(d.ex.length!==w.ex.length) d.ex = w.ex.map((_,i)=>!!d.ex[i]);
+  return d;
+}
+
+/* ═══════════════════ HELPERS ═══════════════════ */
+function $(s,root){ return (root||document).querySelector(s); }
+const stage = document.getElementById("stage");
+function haptic(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms||12); }catch(e){} }
+function toast(msg){
+  const t = document.getElementById("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2200);
+}
+function daysLeft(n){ return TOTAL-n; }
+function fmtW(kg){ return String(kg).replace(".",",")+" kg"; }
+function weekOf(n){ return Math.ceil(n/7); }
+
+function updateCountdown(){
+  const left = daysLeft(state.current);
+  const el = document.getElementById("cd-days");
+  el.innerHTML = left<=0 ? "IBIZA 🎉" : left+" <small>"+(left===1?"dag":"dagen")+"</small>";
+  document.getElementById("cd-bar").style.width = Math.max(2,Math.min(100,((state.current-1)/(TOTAL-1))*100))+"%";
+  // week-dots
+  const dots = document.getElementById("dots");
+  dots.innerHTML="";
+  for(let wk=1; wk<=Math.ceil(TOTAL/7); wk++){
+    const i = document.createElement("i");
+    if(wk<weekOf(state.current)) i.className="done";
+    else if(wk===weekOf(state.current)) i.className="on";
+    dots.appendChild(i);
+  }
+}
+
+/* ═══════════════════ DAGKAART ═══════════════════ */
+function renderDay(n){
+  const w = WORKOUTS[(n-1)%7];
+  const d = dayState(n);
+  const isPast = n < state.current;
+  const left = daysLeft(n);
+  const wk = weekOf(n), dInWk = ((n-1)%7)+1;
+
+  const card = document.createElement("div");
+  card.className = "daycard";
+  const inner = document.createElement("div");
+  inner.className = "cardinner";
+
+  const heroDiv = document.createElement("div");
+  heroDiv.className="hero";
+  heroDiv.innerHTML =
+    '<div class="dag'+(isPast?' past':'')+'">'+(isPast?"✓ Afgerond":"Vandaag")+'</div>'+
+    '<div class="dagnum">DAG '+n+'</div>'+
+    '<div class="sub">'+(left>0 ? "Nog "+left+" "+(left===1?"dag":"dagen")+" tot Ibiza" : "Vandaag vertrek je naar Ibiza 🏝️")+'</div>'+
+    '<div class="wk">WEEK '+wk+' · '+(w.rest?'RUSTDAG':'TRAININGSDAG '+dInWk)+'</div>'+
+    '<div><span class="wtitle'+(w.rest?' rest':'')+'">'+w.title+'</span></div>'+
+    '<div class="focus">'+w.focus+'</div>';
+  inner.appendChild(heroDiv);
+
+  /* — workout — */
+  const sec1 = document.createElement("div");
+  sec1.className="section";
+  sec1.innerHTML = '<div class="sechead"><h3>'+(w.rest?"Herstel":"Workout")+'</h3><span class="count" data-c="w"></span></div>';
+  const panel1 = document.createElement("div"); panel1.className="panel";
+  w.ex.forEach(function(ex,i){
+    const row = document.createElement("div");
+    row.className = "row"+(d.ex[i]?" done":"");
+    row.innerHTML = '<div class="cb">✓</div><div class="info"><div class="name">'+ex.name+'</div>'+
+      '<div class="meta">'+(ex.meta||ex.sets||"")+'</div></div>';
+    if(ex.w && state.weights[ex.name]!==undefined){
+      const chip = document.createElement("button");
+      chip.className="wchip"; chip.textContent = fmtW(state.weights[ex.name]);
+      chip.onclick = function(e){ e.stopPropagation(); openStepper(ex.name,chip); };
+      row.appendChild(chip);
+    }
+    row.onclick = function(){
+      d.ex[i]=!d.ex[i]; row.classList.toggle("done",d.ex[i]);
+      haptic(); refresh(card,n); persist();
+    };
+    panel1.appendChild(row);
+  });
+  sec1.appendChild(panel1); inner.appendChild(sec1);
+
+  /* — voeding — */
+  const sec2 = document.createElement("div");
+  sec2.className="section";
+  sec2.innerHTML = '<div class="sechead"><h3>Voeding</h3><span class="count" data-c="m"></span></div>';
+  const panel2 = document.createElement("div"); panel2.className="panel";
+  MEALS.forEach(function(m,i){
+    const div = document.createElement("div"); div.className="meal";
+    div.innerHTML = '<div class="mealtop"><span class="mealname">'+m.icon+' '+m.name+'</span>'+
+      '<button class="klaar'+(d.meals[i]?' done':'')+'">'+(d.meals[i]?'✓ Klaar':'Klaar')+'</button></div>'+
+      '<div class="mealitems">'+m.items.join(" · ")+'</div>';
+    div.querySelector(".klaar").onclick = function(e){
+      d.meals[i]=!d.meals[i];
+      e.target.classList.toggle("done",d.meals[i]);
+      e.target.textContent = d.meals[i]?"✓ Klaar":"Klaar";
+      haptic(); refresh(card,n); persist();
+    };
+    panel2.appendChild(div);
+  });
+  sec2.appendChild(panel2); inner.appendChild(sec2);
+
+  /* — regels — */
+  const sec3 = document.createElement("div");
+  sec3.className="section";
+  sec3.innerHTML = '<div class="sechead"><h3>Dagelijkse regels</h3><span class="count" data-c="r"></span></div>';
+  const grid = document.createElement("div"); grid.className="rules";
+  RULES.forEach(function(r,i){
+    const el = document.createElement("div");
+    el.className="rule"+(d.rules[i]?" done":"");
+    el.innerHTML = '<div class="cb">✓</div>'+r;
+    el.onclick = function(){
+      d.rules[i]=!d.rules[i]; el.classList.toggle("done",d.rules[i]);
+      haptic(); refresh(card,n); persist();
+    };
+    grid.appendChild(el);
+  });
+  sec3.appendChild(grid); inner.appendChild(sec3);
+
+  /* — progress — */
+  const sec4 = document.createElement("div");
+  sec4.className="section";
+  sec4.innerHTML = '<div class="sechead"><h3>Progress</h3></div>';
+  const pg = document.createElement("div"); pg.className="pgrid";
+  pg.innerHTML =
+    '<div class="ptile"><label>Gewicht</label><input type="number" inputmode="decimal" step="0.1" placeholder="82,0" value="'+(d.weight||"")+'" data-p="w"><span class="unit">kg</span></div>'+
+    '<div class="ptile"><label>Buikomvang</label><input type="number" inputmode="decimal" step="0.5" placeholder="…" value="'+(d.waist||"")+'" data-p="t"><span class="unit">cm</span></div>'+
+    '<div class="ptile" style="grid-column:1/-1"><label>Energie</label><div class="stars">'+
+      [1,2,3,4,5].map(function(k){return '<span data-v="'+k+'" class="'+(k<=d.energy?'on':'')+'">★</span>';}).join("")+'</div></div>'+
+    '<label class="ptile fototile"><div class="ph">'+(d.photo?'<img src="'+d.photo+'">':"📸")+'</div>'+
+    '<div class="txt">Progressfoto<br><span style="color:var(--text-3);font-weight:500">tik om toe te voegen</span></div>'+
+    '<input type="file" accept="image/*" capture="environment"></label>';
+  sec4.appendChild(pg); inner.appendChild(sec4);
+
+  pg.querySelector('[data-p="w"]').oninput = function(e){ d.weight=e.target.value; persist(); };
+  pg.querySelector('[data-p="t"]').oninput = function(e){ d.waist =e.target.value; persist(); };
+  pg.querySelector(".stars").onclick = function(e){
+    const v = e.target.getAttribute("data-v"); if(!v) return;
+    d.energy = +v; haptic(); persist();
+    pg.querySelectorAll(".stars span").forEach(function(s){ s.classList.toggle("on", +s.getAttribute("data-v")<=d.energy); });
+  };
+  pg.querySelector('input[type=file]').onchange = function(e){
+    const f = e.target.files[0]; if(!f) return;
+    const rd = new FileReader();
+    rd.onload = function(){
+      d.photo = rd.result;
+      pg.querySelector(".ph").innerHTML = '<img src="'+d.photo+'">';
+      toast("Progressfoto opgeslagen 📸"); haptic(20); persist();
+    };
+    rd.readAsDataURL(f);
+  };
+
+  /* — afronden — */
+  const finish = document.createElement("div");
+  finish.className="finish";
+  inner.appendChild(finish);
+
+  card.appendChild(inner);
+  refresh(card,n);
+  attachSwipe(card,{type:"day",n:n});
+  return card;
+}
+
+function allDone(n){
+  const d = dayState(n);
+  return d.ex.every(Boolean) && d.meals.every(Boolean) && d.rules.every(Boolean);
+}
+
+function refresh(card,n){
+  const d = dayState(n), w = WORKOUTS[(n-1)%7];
+  const set=function(sel,done,tot){ const el=card.querySelector('[data-c="'+sel+'"]'); if(el){ el.textContent=done+"/"+tot; el.classList.toggle("full",done===tot);} };
+  set("w", d.ex.filter(Boolean).length, w.ex.length);
+  set("m", d.meals.filter(Boolean).length, MEALS.length);
+  set("r", d.rules.filter(Boolean).length, RULES.length);
+
+  const box = card.querySelector(".finish");
+  const left = daysLeft(n);
+  const isPast = n < state.current;
+  let html = "";
+  if(allDone(n)){
+    html += '<div class="donemsg"><div class="big">Fantastisch. 💪</div>'+
+      '<div class="small">'+(left>0 ? "Nog "+left+" "+(left===1?"dag":"dagen")+" tot Ibiza." : "Operation Ibiza voltooid. Geniet ervan. 🏝️")+'</div></div>';
+    if(!isPast) html += '<div class="swipehint">← Swipe naar links voor de volgende dag</div>';
+  }
+  html += '<div class="actions">';
+  if(n>1) html += '<button class="btn ghost" data-a="prev">←</button>';
+  if(!isPast){
+    html += '<button class="btn '+(allDone(n)?'primary':'soft')+'" data-a="done">'+
+      (allDone(n) ? 'Dag '+n+' afronden ✓' : 'Dag toch afronden →')+'</button>';
+  } else {
+    html += '<button class="btn primary" data-a="next">Terug naar vandaag →</button>';
+  }
+  html += '</div>';
+  box.innerHTML = html;
+  const bPrev = box.querySelector('[data-a="prev"]');
+  const bDone = box.querySelector('[data-a="done"]');
+  const bNext = box.querySelector('[data-a="next"]');
+  if(bPrev) bPrev.onclick = function(){ goPrev(card,n); };
+  if(bDone) bDone.onclick = function(){ animOut(card,"left",function(){ completeDay(n); }); };
+  if(bNext) bNext.onclick = function(){ animOut(card,"left",function(){ state.viewing = state.current; persist(); mountStage(); }); };
+}
+
+/* ═══════════════════ GEWICHT-STEPPER ═══════════════════ */
+function openStepper(name,chip){
+  const step = state.weights[name]>=30 ? 2.5 : (state.weights[name]>=10 ? 1 : 0.5);
+  const st = document.createElement("div"); st.className="stepper";
+  st.innerHTML = '<button type="button">−</button><span class="val">'+fmtW(state.weights[name])+'</span><button type="button">+</button>';
+  const btns = st.querySelectorAll("button");
+  const val = st.querySelector(".val");
+  btns[0].onclick = function(e){ e.stopPropagation(); state.weights[name]=Math.max(0,+(state.weights[name]-step).toFixed(1)); val.textContent=fmtW(state.weights[name]); haptic(8); persist(); };
+  btns[1].onclick = function(e){ e.stopPropagation(); state.weights[name]=+(state.weights[name]+step).toFixed(1); val.textContent=fmtW(state.weights[name]); haptic(8); persist(); };
+  st.onclick = function(e){ e.stopPropagation(); };
+  chip.replaceWith(st);
+  setTimeout(function(){
+    const close = function(ev){
+      if(!st.contains(ev.target)){
+        const nchip = document.createElement("button");
+        nchip.className="wchip"; nchip.textContent=fmtW(state.weights[name]);
+        nchip.onclick = function(e2){ e2.stopPropagation(); openStepper(name,nchip); };
+        st.replaceWith(nchip);
+        document.removeEventListener("pointerdown",close,true);
+        toast("Gewicht onthouden voor volgende keer ✓");
+      }
+    };
+    document.addEventListener("pointerdown",close,true);
+  },50);
+}
+
+/* ═══════════════════ WEEKOVERZICHT ═══════════════════ */
+function renderReview(week){
+  const card = document.createElement("div");
+  card.className = "daycard review";
+  const from=(week-1)*7+1, to=week*7;
+  let trained=0, mealsDone=0, mealsTot=0, ws=[], firstWaist=null, lastWaist=null, photoA=null, photoB=null;
+  for(let n=from;n<=to;n++){
+    const d = state.days[n]; if(!d) continue;
+    const w = WORKOUTS[(n-1)%7];
+    if(!w.rest && d.ex.every(Boolean)) trained++;
+    mealsDone += d.meals.filter(Boolean).length; mealsTot += MEALS.length;
+    if(d.weight){ const v=parseFloat(String(d.weight).replace(",",".")); if(!isNaN(v)) ws.push(v); }
+    if(d.waist){ const v=parseFloat(String(d.waist).replace(",",".")); if(!isNaN(v)){ if(firstWaist===null)firstWaist=v; lastWaist=v; } }
+    if(d.photo){ if(!photoA) photoA=d.photo; else photoB=d.photo; }
+  }
+  const avgW = ws.length? (ws.reduce(function(a,b){return a+b;},0)/ws.length).toFixed(1).replace(".",",")+" kg" : "—";
+  let dWaist = "—";
+  if(firstWaist!==null && lastWaist!==null && lastWaist!==firstWaist){
+    const diff = lastWaist-firstWaist;
+    dWaist = (diff>0?"+":"")+diff.toFixed(1).replace(".",",")+" cm";
+  }
+  const pct = mealsTot? Math.round(100*mealsDone/mealsTot):0;
+
+  card.innerHTML = '<div class="cardinner">'+
+    '<div class="hero"><div class="dag">Weekoverzicht</div>'+
+    '<div class="dagnum">WEEK '+week+' VOLTOOID 🎉</div>'+
+    '<div class="sub">Nog '+daysLeft(state.current)+' dagen tot Ibiza</div></div>'+
+    '<div class="panel statlist">'+
+      '<div class="stat"><span class="k">Trainingen</span><span class="v green">'+trained+'/6</span></div>'+
+      '<div class="stat"><span class="k">Voeding</span><span class="v '+(pct>=85?'green':'')+'">'+pct+'%</span></div>'+
+      '<div class="stat"><span class="k">Gemiddeld gewicht</span><span class="v">'+avgW+'</span></div>'+
+      '<div class="stat"><span class="k">Taille</span><span class="v '+(dWaist.indexOf("-")===0?'green':'')+'">'+dWaist+'</span></div>'+
+    '</div>'+
+    '<div class="beforeafter">'+
+      '<div class="bx">'+(photoA?'<img src="'+photoA+'">':"📷<span>voor</span>")+'</div>'+
+      '<div class="bx">'+(photoB?'<img src="'+photoB+'">':"📷<span>na</span>")+'</div>'+
+    '</div>'+
+    '<div class="quote">“'+QUOTES[Math.min(week-1,QUOTES.length-1)]+'”</div>'+
+    '<div class="swipehint" style="margin-top:20px">← Swipe om door te gaan</div>'+
+    '<div class="actions"><button class="btn primary" data-a="go">Door naar dag '+(week*7+1)+' →</button></div>'+
+  '</div>';
+  card.querySelector('[data-a="go"]').onclick = function(){
+    animOut(card,"left",function(){ state.reviewFor=null; persist(); mountStage(); });
+  };
+  attachSwipe(card,{type:"review"});
+  return card;
+}
+
+/* ═══════════════════ FINALE ═══════════════════ */
+function renderFinale(){
+  const card = document.createElement("div");
+  card.className = "daycard finale";
+  let done=0, first=null, last=null;
+  for(let n=1;n<=TOTAL;n++){
+    const d=state.days[n]; if(!d) continue;
+    if(d.completed) done++;
+    if(d.weight){ const v=parseFloat(String(d.weight).replace(",",".")); if(!isNaN(v)){ if(first===null)first=v; last=v; } }
+  }
+  let dW="—";
+  if(first!==null&&last!==null&&last!==first){ const diff=last-first; dW=(diff>0?"+":"")+diff.toFixed(1).replace(".",",")+" kg"; }
+  card.innerHTML = '<div class="cardinner">'+
+    '<div class="hero"><div class="dag">Missie volbracht</div>'+
+    '<div class="dagnum">IBIZA 🏝️</div>'+
+    '<div class="sub">43 dagen Operation Ibiza — afgerond.</div></div>'+
+    '<div class="panel statlist">'+
+      '<div class="stat"><span class="k">Dagen voltooid</span><span class="v">'+done+'/43</span></div>'+
+      '<div class="stat"><span class="k">Gewichtsverandering</span><span class="v">'+dW+'</span></div>'+
+      '<div class="stat"><span class="k">Status</span><span class="v">Beach body ✔</span></div>'+
+    '</div>'+
+    '<div class="quote" style="background:rgba(255,255,255,.16);color:#fff">Je hebt het verdiend. Geniet van iedere minuut. 🍹</div>'+
+  '</div>';
+  return card;
+}
+
+/* ═══════════════════ STACK & SWIPE ═══════════════════ */
+function mountStage(){
+  stage.innerHTML = "";
+  let top;
+  if(state.current>TOTAL){ top = renderFinale(); }
+  else if(state.reviewFor){ top = renderReview(state.reviewFor/7); }
+  else { top = renderDay(state.viewing); }
+
+  if(!state.reviewFor && state.current<=TOTAL && state.viewing<TOTAL){
+    const nx = WORKOUTS[state.viewing%7];
+    const behind = document.createElement("div");
+    behind.className="daycard behind";
+    behind.innerHTML = '<div class="cardinner"><div class="hero">'+
+      '<div class="dag">Morgen</div><div class="dagnum">DAG '+(state.viewing+1)+'</div>'+
+      '<div><span class="wtitle'+(nx.rest?' rest':'')+'">'+nx.title+'</span></div></div></div>';
+    stage.appendChild(behind);
+  }
+  stage.appendChild(top);
+  updateCountdown();
+}
+
+function animOut(card,dir,fn){
+  card.classList.remove("dragging");
+  card.style.transform=""; card.style.opacity="";
+  card.classList.add(dir==="left"?"gone-left":"gone-right");
+  haptic(dir==="left"?25:15);
+  setTimeout(fn,420);
+}
+
+function goPrev(card,n){
+  if(n<=1){ toast("Dit is dag 1 — er is geen eerdere dag"); return; }
+  animOut(card,"right",function(){ state.viewing=n-1; persist(); mountStage(); });
+}
+
+function attachSwipe(card,ctx){
+  let x0=0,y0=0,dx=0,locked=null,active=false;
+  function commit(){
+    if(locked!=="h" || Math.abs(dx)<=90){ card.style.transform=""; card.style.opacity=""; return; }
+    if(dx<0){ // swipe links
+      if(ctx.type==="review"){ animOut(card,"left",function(){ state.reviewFor=null; persist(); mountStage(); }); }
+      else if(ctx.n < state.current){ animOut(card,"left",function(){ state.viewing=Math.min(ctx.n+1,state.current); persist(); mountStage(); }); }
+      else { animOut(card,"left",function(){ completeDay(ctx.n); }); }
+    } else { // swipe rechts
+      if(ctx.type==="review"){ card.style.transform=""; card.style.opacity=""; return; }
+      goPrev(card,ctx.n);
+    }
+  }
+  card.addEventListener("touchstart",function(e){
+    x0=e.touches[0].clientX; y0=e.touches[0].clientY; dx=0; locked=null; active=true;
+  },{passive:true});
+  card.addEventListener("touchmove",function(e){
+    if(!active) return;
+    const mx=e.touches[0].clientX-x0, my=e.touches[0].clientY-y0;
+    if(locked===null && (Math.abs(mx)>12||Math.abs(my)>12))
+      locked = Math.abs(mx)>Math.abs(my)*1.4 ? "h":"v";
+    if(locked!=="h") return;
+    e.preventDefault();
+    dx=mx;
+    card.classList.add("dragging");
+    card.style.transform="translateX("+dx+"px) rotate("+(dx/28)+"deg)";
+    card.style.opacity = 1-Math.min(.4,Math.abs(dx)/500);
+  },{passive:false});
+  card.addEventListener("touchend",function(){
+    if(!active) return; active=false;
+    card.classList.remove("dragging");
+    commit();
+  });
+  // muis (desktop)
+  let mdown=false;
+  card.addEventListener("mousedown",function(e){
+    if(e.target.closest("input,button,.klaar,.stars,label")) return;
+    mdown=true; x0=e.clientX; dx=0; locked="h";
+  });
+  document.addEventListener("mousemove",function(e){
+    if(!mdown || !card.isConnected) return;
+    dx=e.clientX-x0;
+    if(Math.abs(dx)>8){ card.classList.add("dragging");
+      card.style.transform="translateX("+dx+"px) rotate("+(dx/28)+"deg)"; }
+  });
+  document.addEventListener("mouseup",function(){
+    if(!mdown) return; mdown=false;
+    if(!card.isConnected) return;
+    card.classList.remove("dragging");
+    commit();
+  });
+}
+
+function completeDay(n){
+  const d = dayState(n);
+  d.completed = true;
+  if(n>=TOTAL){
+    state.current = TOTAL+1; state.viewing = TOTAL;
+    confetti(400); toast("IBIZA! Operatie voltooid 🏝️🎉");
+    persist(); mountStage(); return;
+  }
+  state.current = Math.max(state.current, n+1);
+  state.viewing = state.current;
+  if(n%7===0){ state.reviewFor = n; confetti(); haptic(40); }
+  persist(); mountStage();
+}
+
+/* ═══════════════════ CONFETTI ═══════════════════ */
+function confetti(count){
+  count = count||180;
+  const cv=document.getElementById("confetti"), ctx=cv.getContext("2d");
+  cv.width=window.innerWidth; cv.height=window.innerHeight;
+  const colors=["#2F6FED","#5B8DF5","#2FB56B","#F2803B","#FFD166","#ffffff"];
+  const seed = (typeof performance!=="undefined"?performance.now():1234);
+  const P=[];
+  for(let i=0;i<count;i++){
+    const rr=function(k){ return Math.abs((Math.sin(seed*.001+i*12.9898*k)*43758.5453)%1); };
+    P.push({x:rr(1)*cv.width, y:-20-rr(2)*cv.height*.5, s:4+rr(3)*6,
+      vy:2+rr(4)*3.5, vx:(rr(5)-.5)*3, rot:rr(6)*Math.PI, vr:(rr(7)-.5)*.2,
+      c:colors[i%colors.length]});
+  }
+  let frames=0;
+  (function tick(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    P.forEach(function(p){
+      p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.vy+=.03;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+      ctx.fillStyle=p.c; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6); ctx.restore();
+    });
+    if(++frames<240) requestAnimationFrame(tick);
+    else ctx.clearRect(0,0,cv.width,cv.height);
+  })();
+}
+
+/* ═══════════════════ PROFIELKEUZE ═══════════════════ */
+function profKey(name){ return "bizabody-v1-"+name; }
+function profileSummary(name){
+  const raw = store.raw(profKey(name));
+  if(!raw) return "Nog niet gestart";
+  try{
+    const s = JSON.parse(raw);
+    if(s.current>TOTAL) return "Voltooid — IBIZA 🏝️";
+    return "Dag "+(s.current||1)+" van "+TOTAL;
+  }catch(e){ return "Nog niet gestart"; }
+}
+function renderPicker(){
+  document.getElementById("profilebtn").style.display="none";
+  stage.innerHTML="";
+  const card = document.createElement("div");
+  card.className="daycard";
+  let html = '<div class="cardinner"><div class="hero">'+
+    '<div class="dag">Operation Ibiza</div>'+
+    '<div class="dagnum" style="font-size:34px;letter-spacing:-1px">Wie ben jij?</div>'+
+    '<div class="sub">Kies je profiel — ieder heeft zijn eigen voortgang</div></div>'+
+    '<div class="profiles">';
+  PROFILES.forEach(function(p){
+    html += '<div class="profile" data-p="'+p.name+'">'+
+      '<div class="avatar" style="background:'+p.color+'">'+p.name.charAt(0)+'</div>'+
+      '<div><div class="pname">'+p.name+'</div><div class="pmeta">'+profileSummary(p.name)+'</div></div>'+
+      '<div class="arrow">›</div></div>';
+  });
+  html += '</div></div>';
+  card.innerHTML = html;
+  card.querySelectorAll(".profile").forEach(function(el){
+    el.onclick = function(){ haptic(15); boot(el.getAttribute("data-p")); };
+  });
+  stage.appendChild(card);
+}
+function updateProfileChip(){
+  const p = PROFILES.find(function(x){ return x.name===profile; });
+  const btn = document.getElementById("profilebtn");
+  if(!p){ btn.style.display="none"; return; }
+  btn.style.display="flex";
+  btn.textContent = p.name;
+  btn.style.color = "#fff";
+  btn.style.background = p.color;
+  btn.style.borderColor = "transparent";
+}
+document.getElementById("profilebtn").onclick = function(){
+  haptic(); renderPicker();
+};
+
+function boot(name){
+  profile = name;
+  try{ localStorage.setItem("bizabody-profile", name); }catch(e){}
+  store.KEY = profKey(name);
+  // migratie: oude opslag (zonder profielen) hoort bij Melvin
+  if(name==="Melvin" && store.ok){
+    try{
+      if(!localStorage.getItem(store.KEY) && localStorage.getItem("bizabody-v1"))
+        localStorage.setItem(store.KEY, localStorage.getItem("bizabody-v1"));
+    }catch(e){}
+  }
+  state = freshState();
+  const saved = store.load();
+  if(saved && saved.days){
+    state = Object.assign(state, saved);
+    state.weights = Object.assign({}, DEFAULT_WEIGHTS, saved.weights||{});
+  }
+  applyTheme();
+  updateProfileChip();
+  mountStage();
+}
+
+/* ═══════════════════ THEMA & INIT ═══════════════════ */
+function applyTheme(){ document.documentElement.setAttribute("data-theme", state.theme); }
+document.getElementById("themebtn").onclick = function(){
+  state.theme = state.theme==="dark"?"light":"dark"; applyTheme(); haptic(); persist();
+};
+
+applyTheme();
+(function init(){
+  let savedProfile = null;
+  try{ savedProfile = localStorage.getItem("bizabody-profile"); }catch(e){}
+  if(savedProfile && PROFILES.some(function(p){ return p.name===savedProfile; })) boot(savedProfile);
+  else renderPicker();
+})();
+if(!store.ok){
+  setTimeout(function(){ toast("Let op: voortgang wordt hier niet bewaard (preview-modus)"); }, 800);
+}
+</script>
+</body>
+</html>
